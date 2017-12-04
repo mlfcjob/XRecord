@@ -14,7 +14,8 @@ using namespace std;
 
 int main()
 {
-	const char *inFile = "F:\\FFOutput\\2504.mkv";
+	//const char *inFile = "F:\\FFOutput\\swxfdemo.mp4";
+	const char *inFile = "F:\\FFOutput\\zVision Demo Creo3.0 Ä¦ÍÐ³µ.mp4";
 	char outFile[] = "out.mov";
 	//muxter and demuxers
 	av_register_all();
