@@ -103,7 +103,7 @@ int main()
 
 	// 4 rgb to yuv (init context)
 	SwsContext *ctx = NULL;
-	ctx = sws_getCachedContext(ctx, width, height, AV_PIX_FMT_BGR24,
+	ctx = sws_getCachedContext(ctx, width, height, AV_PIX_FMT_RGB24,
 		width, height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, 0, 0, 0);
 
 	// input space
