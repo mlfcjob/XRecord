@@ -3,12 +3,16 @@ extern "C"
 {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libswresample/swresample.h>
+#include <libswscale/swscale.h>
 }
 
 #include <iostream>
 #pragma comment(lib, "avformat.lib")
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avutil.lib")
+#pragma comment(lib, "swresample.lib")
+#pragma comment(lib, "swscale.lib")
 
 using namespace std;
 
@@ -26,12 +30,13 @@ int main()
 	FILE *fp = fopen(inFile, "rb");
 	if (!fp)
 	{
-		cout << inFile << "open failed" << endl;
+		cout << inFile << " open failed" << endl;
+		cout << strerror(errno) << endl;
 		getchar();
 		return -1;
 	}
 
-	int width  = 848;
+	int width  = 640;
 	int height = 480;
 	int fps = 25;
 
@@ -87,7 +92,7 @@ int main()
 
 	// 3 add video stream
 	AVStream *st = avformat_new_stream(oc, NULL);
-	st->codec = c;
+	//st->codec = c;
 	st->id = 0;
 	st->codecpar->codec_tag = 0;
 	avcodec_parameters_from_context(st->codecpar, c);
@@ -96,100 +101,107 @@ int main()
 	av_dump_format(oc, 0, outFile, 1);
 	cout << "=========================================" << endl;
 
-	// 4 rgb to yuv
-	//SwsContext *ctx = NULL;
+	// 4 rgb to yuv (init context)
+	SwsContext *ctx = NULL;
+	ctx = sws_getCachedContext(ctx, width, height, AV_PIX_FMT_BGR24,
+		width, height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, 0, 0, 0);
 
-	//AVFormatContext *ic = NULL;
+	// input space
+	unsigned char *rgb = new unsigned char[width * height * 3];
 
-	//// 1 打开输入文件
-	//avformat_open_input(&ic, inFile, 0, 0);
-	//if (ic == NULL)
-	//{
-	//	cout<<" 1 avformat_open input failed"<<endl;
-	//	getchar();
-	//	return -1;
-	//}
+	// output space
+	AVFrame *yuv = av_frame_alloc();
+	yuv->format = AV_PIX_FMT_YUV420P;
+	yuv->width = width;
+	yuv->height = height;
+	ret = av_frame_get_buffer(yuv, 24);
+	if (ret < 0)
+	{
+		cout << "av_frame_get_buffer failed" << endl;
+		getchar();
+		return -1;
+	}
 
-	//cout << "open infile success" << endl;
+	// 5 write mp4 header
+	ret = avio_open(&oc->pb, outFile, AVIO_FLAG_WRITE);
+	if (ret < 0)
+	{
+		cout << "avio_open failed " << endl;
+		getchar();
+		return -1;
+	}
 
-	//// 2 create output context
-	//AVFormatContext *oc;
-	//avformat_alloc_output_context2(&oc, NULL , NULL/* mp4*/, outFile);
-	//if (!oc)
-	//{
-	//	cerr << "avformat_alloc_output_context2 faield" << endl;
-	//	getchar();
-	//	return -1;
-	//}
+	ret = avformat_write_header(oc, NULL);
+	if (ret < 0) {
+		cout << "avformat wrte header failed!" << endl;
+		getchar();
+		return -1;
+	}
 
-	//// 3  add thes stream 
-	//AVStream *videoStream = avformat_new_stream(oc, NULL);
-	//AVStream *audioStream = avformat_new_stream(oc, NULL);
- //
-	//for (int i = 0; i < ic->nb_streams; i++)
-	//{
-	//	if (ic->streams[i]->index == AVMEDIA_TYPE_VIDEO)
-	//	{
-	//		avcodec_parameters_copy(videoStream->codecpar, ic->streams[i]->codecpar);
-	//	}
+	static int i = 0;
+	int p = 0;
+	for (;;)
+	{
+		int len = fread(rgb, 1, width * height * 3, fp);
+		if (len <= 0)
+		{
+			break;
+		}
 
-	//	if (ic->streams[i]->index == AVMEDIA_TYPE_AUDIO)
-	//	{ 
-	//		avcodec_parameters_copy(audioStream->codecpar, ic->streams[i]->codecpar);
-	//	}
-	//}
+		uint8_t *indata[AV_NUM_DATA_POINTERS] = { 0 };
+		indata[0] = rgb;
 
-	//// 4 copy parameters
-	//// 不编码  ??  -c copy
-	//videoStream->codecpar->codec_tag = 0;
-	//audioStream->codecpar->codec_tag = 0;
+		int inlinesize[AV_NUM_DATA_POINTERS] = {0};
+		inlinesize[0] = width * 3;
 
-	//av_dump_format(ic, 0, inFile, 0);
-	//cout << "=======================================================================" << endl;
-	//av_dump_format(oc, 0, outFile, 1);
+		int h = sws_scale(ctx, indata, inlinesize, 0, height, yuv->data, yuv->linesize);
+		if (h <= 0)
+		{
+			break;
+		}
 
+		// 6 encode frame
+		yuv->pts = p;
+		//yuv->pict_type = AV_PICTURE_TYPE_I;
+		p = p + 3600;  //: 90000 / fps  timebase {1, 90000}
+		ret = avcodec_send_frame(c, yuv);
 
-	//// 5 open out file io, write file header
-	//char buf[156] = {0};
-	//int ret = avio_open(&oc->pb, outFile, AVIO_FLAG_WRITE);
-	//if (ret < 0)
-	//{
-	//	cout << "avio open failed" << endl;
-	//	getchar();
-	//	return -1;
-	//}
+		AVPacket pkt;
+		av_init_packet(&pkt);
+		ret = avcodec_receive_packet(c, &pkt);
+		if (ret != 0) {
+			continue;
+		}
 
-	//ret = avformat_write_header(oc, NULL);
-	//if (ret < 0)
-	//{
-	//	cout << "avformat write header failed" << endl;
-	//	getchar();
-	//	return -1;
-	//}
+		cout << "<" << pkt.size << ">"<< endl;
 
+	/*	av_write_frame(oc, &pkt);
+		av_packet_unref(&pkt);*/
 
-	//AVPacket pkt;
-	//for(;;)
-	//{ 
-	//	int re = av_read_frame(ic, &pkt);
-	//	if (re < 0)   //end of file
-	//		break;
+		av_interleaved_write_frame(oc, &pkt);
+	}
 
-	//	pkt.pts = av_rescale_q_rnd(pkt.pts, ic->streams[pkt.stream_index]->time_base, oc->streams[pkt.stream_index]->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-	//	pkt.dts = av_rescale_q_rnd(pkt.dts, ic->streams[pkt.stream_index]->time_base, oc->streams[pkt.stream_index]->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-	//	pkt.pos = -1;
-	//	pkt.duration = av_rescale_q_rnd(pkt.duration, ic->streams[pkt.stream_index]->time_base, oc->streams[pkt.stream_index]->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-	//	av_write_frame(oc, &pkt);
-	//	av_packet_unref(&pkt);
-	//	cout << "# ";
-	//}
+	// write video index
+	av_write_trailer(oc);
 
-	//av_write_trailer(oc);
+	// close output io
+	avio_close(oc->pb);
 
-	//avio_close(oc->pb);
+	// clean output context
+	avformat_free_context(oc);
 
-	//cout << "avformat write header success" << endl;
+	// close encode
+	avcodec_close(c);
 
+	// clean encode context
+	avcodec_free_context(&c);
+
+	// clean scale context
+	sws_freeContext(ctx);
+
+	delete rgb;
+
+	cout << "========================= end======================" << endl;
 	getchar();
 	return 0;
 }
