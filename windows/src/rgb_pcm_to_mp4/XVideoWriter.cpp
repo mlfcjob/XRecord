@@ -26,6 +26,7 @@ public:
 	AVStream    *vs = NULL;      // 视频流
 	SwsContext  *vsc = NULL;     // 像素转换上下文
 	AVFrame     *yuv = NULL;     // 输出yuv
+	int         vpts = 0;        // 视频的pts
 
 	void Close()
 	{
@@ -36,6 +37,10 @@ public:
 		if (vc) {
 			avcodec_close(vc);
 			avcodec_free_context(&vc);
+		}
+
+		if (yuv) {
+			av_frame_free(&yuv);
 		}
 
 		if (vsc)
@@ -49,14 +54,16 @@ public:
 	{
 		Close();
 
-		filename = string(file);
-
 		// muxer output context
 		ret = avformat_alloc_output_context2(&ic, NULL, NULL, file);
 		if (!ic) {
 			cerr << "avformat_alloc_output_context2 failed " << endl;
 			return false;
 		}
+
+		//filename = string(file);
+		filename = file;
+
 		return true;
 	}
 
@@ -143,14 +150,105 @@ public:
 		return true;
 	}
 
-	int RgbToYuv(unsigned char *data)
+	AVPacket * EncodeVideo(const unsigned char *data)
 	{
+		AVPacket *p = NULL;
 		uint8_t *indata[AV_NUM_DATA_POINTERS] = { 0 };
 		indata[0] = (uint8_t *)data;
-		int inlinsize[AV_NUM_DATA_POINTERS] = {0};
+		int inlinsize[AV_NUM_DATA_POINTERS] = { 0 };
 		inlinsize[0] = inWidth * 4;
 
-		return sws_scale(vsc, indata, inlinsize, 0, inHeight, yuv->data, yuv->linesize);
+		// rgb to yuv
+		int h = sws_scale(vsc, indata, inlinsize, 0, inHeight, yuv->data, yuv->linesize);
+		if (h < 0) {
+			cout << "sws scale error" << endl;
+			return p;
+		}
+
+		// encode
+		p = av_packet_alloc();
+		yuv->pts = vpts++;
+		av_init_packet(p);
+
+		ret = avcodec_send_frame(vc, yuv);
+		if (ret != 0) {
+			cout << "avcodec_send_frame failed" << endl;
+			return NULL;
+		}
+
+		ret = avcodec_receive_packet(vc, p);
+		if (ret != 0 || p->size <= 0)
+		{
+			cout << "avcodec_receieve packet failed" << endl;
+			av_packet_free(&p);
+			return false;
+		}
+
+		av_packet_rescale_ts(p, vc->time_base, vs->time_base);
+		return p;
+	}
+
+	bool WriteHeader()
+	{
+		if (!ic)
+		{
+			return false;
+		}
+
+		// open io
+		ret = avio_open(&ic->pb, filename.c_str(), AVIO_FLAG_WRITE);
+
+		//write header
+		ret = avformat_write_header(ic, NULL);
+		if (ret != 0)
+		{
+			cout << "avformt_write_header failed" << endl;
+			return false;
+		}
+
+		return true;
+	}
+
+	// 会释放pkt的空间
+	bool WriteFrame(AVPacket *pkt)
+	{
+		if (!ic || !pkt || pkt->size <= 0)
+		{
+			return false;
+		}
+
+		//ret = av_write_frame(ic, pkt);
+		//if (ret != 0)
+		//{
+		//	cout << "av_write_frame failed " << endl;
+		//	return false;
+		//}
+		//av_packet_unref(pkt);
+
+		ret = av_interleaved_write_frame(ic,pkt);
+		if (ret != 0)
+		{
+			cout << "av_interleaved_write_frame failed " << endl;
+			return false;
+		}
+
+		return true;
+	}
+
+	bool WriteEnd() {
+		if (!ic || !ic->pb) {
+			return false;
+		}
+
+		ret = av_write_trailer(ic);
+		if (ret != 0)
+		{
+			cout << "av_write_trailer failed" << endl;
+			return false;
+		}
+
+		avio_close(ic->pb);
+		return true;
 	}
 
 private:

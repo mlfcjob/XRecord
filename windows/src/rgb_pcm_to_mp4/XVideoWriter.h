@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+class AVPacket;
+
 class XVideoWriter
 {
 public:
@@ -22,9 +24,13 @@ public:
 	virtual void Close() = 0;
 
 	virtual bool AddVideoStream() = 0;
-	virtual int RgbToYuv(unsigned char *data) = 0;
+	virtual AVPacket *EncodeVideo(const unsigned char *rgb) = 0;
+	virtual bool WriteHeader() = 0;
+	virtual bool WriteFrame(AVPacket *pkt) = 0;
+	virtual bool WriteEnd() = 0;
 
 	static XVideoWriter *Get(unsigned short index = 0);
+
 	virtual ~XVideoWriter();
 
 
