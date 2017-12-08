@@ -15,16 +15,29 @@ int main()
 	if (!fp) {
 		cout << "fopen" << rgbFile << endl;
 		getchar();
+		return -1;
+	}
+
+	FILE *afp = fopen(pcmFile, "rb");
+	if (!afp){
+		cout << "fopen " << pcmFile << endl;
+		getchar();
+		return -1;
 	}
 
 	XVideoWriter *xw = XVideoWriter::Get(0);
 
 	cout << xw->Init(outFile)<< endl;
 	cout << xw->AddVideoStream()<< endl;
+	cout << xw->AddAudioStream() << endl;
 
 	// rgb to yuv
 	int readSize = xw->inWidth * xw->inHeight * 4;
 	unsigned char *rgb = new unsigned char[readSize];
+
+	// pcm resamlpe
+	int vReadSize = xw->outChannels * xw->outNBSample * 16;
+	unsigned char *pcm = new unsigned char[vReadSize];
 
 	xw->WriteHeader();
 
@@ -42,6 +55,14 @@ int main()
 			continue;
 		}
 
+		len = fread(pcm, 1, vReadSize, afp);
+		cout << len << endl;
+		if (len <= 0)
+		{
+			break;
+		}
+
+		xw->EncodeAudio(pcm);
 
 		if (!xw->WriteFrame(pkt))
 		{
@@ -57,6 +78,13 @@ int main()
 	// encode video frame
 	delete rgb;
 	rgb = NULL;
+
+	delete pcm;
+	pcm = NULL;
+
+	fclose(fp);
+	fclose(afp);
+
 	getchar();
 	return 0;
 }

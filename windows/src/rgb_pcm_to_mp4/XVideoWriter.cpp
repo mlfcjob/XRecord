@@ -23,10 +23,15 @@ class CXVideoWriter :public XVideoWriter
 public:
 	AVFormatContext *ic = NULL;  // 封装mp4上下文
 	AVCodecContext *vc = NULL;   // 视频编码器上下文
+	AVCodecContext *ac = NULL;   // 音频编码器上下文
 	AVStream    *vs = NULL;      // 视频流
+	AVStream    *as = NULL;      // 音频流
 	SwsContext  *vsc = NULL;     // 像素转换上下文
+	SwrContext  *asc = NULL;     // 音频重采样上下文
 	AVFrame     *yuv = NULL;     // 输出yuv
+	AVFrame     *pcm = NULL;     // 输出pcm
 	int         vpts = 0;        // 视频的pts
+	int         apts = 0;        // 音频的pts
 
 	void Close()
 	{
@@ -39,6 +44,11 @@ public:
 			avcodec_free_context(&vc);
 		}
 
+		if (ac) {
+			avcodec_close(ac);
+			avcodec_free_context(&ac);
+		}
+
 		if (yuv) {
 			av_frame_free(&yuv);
 		}
@@ -47,6 +57,11 @@ public:
 		{
 			sws_freeContext(vsc);
 			vsc = NULL;
+		}
+
+		if (asc)
+		{
+			swr_free(&asc);
 		}
 	}
 
@@ -249,6 +264,113 @@ public:
 
 		avio_close(ic->pb);
 		return true;
+	}
+
+
+	bool AddAudioStream()
+	{
+		// 1 find aac encoder
+		AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
+		if (!codec) {
+			cout << "avcodec_find_encoder AAC failed" << endl;
+			return false;
+		}
+
+		// 2 create and open aac encdoer
+		ac = avcodec_alloc_context3(codec);
+		if (!ac)
+		{
+			cout << "avcodec_alloc_context3 failed" << endl;
+			return false;
+		}
+
+		ac->codec_id = AV_CODEC_ID_AAC;
+		ac->bit_rate = aBitrate;
+		ac->sample_rate = outSampleRate;
+		ac->sample_fmt = (AVSampleFormat)outSampleFmt;
+		ac->channels = outChannels;
+		ac->channel_layout = av_get_default_channel_layout(outChannels);
+		ac->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+		ac->codec_tag = 0;
+
+		ret = avcodec_open2(ac, codec, NULL);
+		if (ret != 0)
+		{
+			avcodec_free_context(&ac);
+			cout << "avcodec_open2 failed audio" << endl;
+			return false;
+		}
+
+		cout << "avcodec open aac success " << endl;
+
+		// add audio stream
+		as = avformat_new_stream(ic, codec);
+		if (!as)
+		{
+			cout << "avfomat_new_stream(Audio) failed" << endl;
+			return false;
+		}
+
+		as->codecpar->codec_tag = 0;
+		avcodec_parameters_from_context(as->codecpar, ac);
+
+		av_dump_format(ic, 0, filename.c_str(), 1);
+
+
+		// auido resample context init 
+		asc = swr_alloc_set_opts(asc, ac->channel_layout, ac->sample_fmt, ac->sample_rate,   // output format 
+			                     av_get_default_channel_layout(inChannels), (AVSampleFormat)inSampleFmt, inSampleRate,// input format
+								0, 0);
+		if (!asc)
+		{
+			cout << "swr_alloc set opts failed" << endl;
+			return false;
+		}
+
+		ret = swr_init(asc);
+		if (ret != 0)
+		{
+			cout << "swr init failed" << endl;
+			return false;
+		}
+
+		// pcm after resample
+		if (!pcm)
+		{
+			pcm = av_frame_alloc();
+			pcm->format = ac->sample_fmt;
+			pcm->channels = ac->channels;
+			pcm->channel_layout = ac->channel_layout;
+			pcm->nb_samples = outNBSample; // samples per sec
+
+			ret = av_frame_get_buffer(pcm, 0);
+			if (ret < 0)
+			{
+				cout << "av_frame_get buffer failed (audio pcm)" << endl;
+				return false;
+			}
+		}
+
+		cout << "audio avframe create success" << endl;
+		return true;
+	}
+
+	AVPacket *EncodeAudio(const unsigned char *data)
+	{
+		if (data == NULL)
+		{
+			cout << "input data is null" << endl;
+			return false;
+		}
+
+		AVPacket *p = NULL;
+
+		const uint8_t *indata[AV_NUM_DATA_POINTERS] = { 0 };
+		indata[0] = (const uint8_t*)data;
+
+		int len = swr_convert(asc, pcm->data, pcm->nb_samples, indata, pcm->nb_samples);
+		cout << " [" << len << "] ";
+		return p;
 	}
 
 private:
