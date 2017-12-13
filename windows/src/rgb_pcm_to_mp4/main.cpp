@@ -36,8 +36,8 @@ int main()
 	unsigned char *rgb = new unsigned char[readSize];
 
 	// pcm resamlpe
-	int vReadSize = xw->outChannels * xw->outNBSample * 16;
-	unsigned char *pcm = new unsigned char[vReadSize];
+	int aReadSize = xw->outChannels * xw->outNBSample * 2;
+	unsigned char *pcm = new unsigned char[aReadSize];
 
 	xw->WriteHeader();
 
@@ -55,8 +55,7 @@ int main()
 			continue;
 		}
 
-		len = fread(pcm, 1, vReadSize, afp);
-		cout << len << endl;
+		len = fread(pcm, 1, aReadSize, afp);
 		if (len <= 0)
 		{
 			break;

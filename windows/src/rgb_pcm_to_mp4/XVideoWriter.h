@@ -25,7 +25,7 @@ public:
 	int outFps = 25;
 
     // audio input parameter
-	XSAMPLEFMT inSampleFmt = X_FLATP;
+	XSAMPLEFMT inSampleFmt = X_S16;
 	int  inChannels = 2;
 	int  inSampleRate = 48000;
 

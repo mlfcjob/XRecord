@@ -291,7 +291,6 @@ public:
 		ac->channels = outChannels;
 		ac->channel_layout = av_get_default_channel_layout(outChannels);
 		ac->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-		ac->codec_tag = 0;
 
 		ret = avcodec_open2(ac, codec, NULL);
 		if (ret != 0)
