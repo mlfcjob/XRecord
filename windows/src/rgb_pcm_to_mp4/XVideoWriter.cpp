@@ -108,8 +108,8 @@ public:
 		vc->width = outWidth;
 		vc->height = outHeight;
 		// timebase
-		vc->time_base = {1, outFps};
-		vc->framerate = {outFps, 1};
+		vc->time_base = { 1, outFps };
+		vc->framerate = { outFps, 1 };
 
 		vc->gop_size = 50; // IDR ?? 多少帧一个关键帧
 		vc->max_b_frames = 0;  // no B frames
@@ -138,9 +138,9 @@ public:
 
 		// scale context init
 		vsc = sws_getCachedContext(vsc,
-			              inWidth, inHeight, (AVPixelFormat)inPixFmt,  // input param
-			              outWidth, outHeight, AV_PIX_FMT_YUV420P, // output param
-			              SWS_BICUBIC, NULL, NULL, NULL);
+			inWidth, inHeight, (AVPixelFormat)inPixFmt,  // input param
+			outWidth, outHeight, AV_PIX_FMT_YUV420P, // output param
+			SWS_BICUBIC, NULL, NULL, NULL);
 
 		if (!vsc) {
 			cerr << "sws_getCachedContext failed" << endl;
@@ -196,10 +196,11 @@ public:
 		{
 			cout << "avcodec_receieve packet failed" << endl;
 			av_packet_free(&p);
-			return false;
+			return NULL;
 		}
 
 		av_packet_rescale_ts(p, vc->time_base, vs->time_base);
+		p->stream_index = vs->index;
 		return p;
 	}
 
@@ -240,7 +241,7 @@ public:
 		//}
 		//av_packet_unref(pkt);
 
-		ret = av_interleaved_write_frame(ic,pkt);
+		ret = av_interleaved_write_frame(ic, pkt);
 		if (ret != 0)
 		{
 			cout << "av_interleaved_write_frame failed " << endl;
@@ -318,8 +319,8 @@ public:
 
 		// auido resample context init 
 		asc = swr_alloc_set_opts(asc, ac->channel_layout, ac->sample_fmt, ac->sample_rate,   // output format 
-			                     av_get_default_channel_layout(inChannels), (AVSampleFormat)inSampleFmt, inSampleRate,// input format
-								0, 0);
+			av_get_default_channel_layout(inChannels), (AVSampleFormat)inSampleFmt, inSampleRate,// input format
+			0, 0);
 		if (!asc)
 		{
 			cout << "swr_alloc set opts failed" << endl;
@@ -356,20 +357,57 @@ public:
 
 	AVPacket *EncodeAudio(const unsigned char *data)
 	{
+		AVPacket *p = NULL;
 		if (data == NULL)
 		{
 			cout << "input data is null" << endl;
-			return false;
+			return p;
 		}
 
-		AVPacket *p = NULL;
-
+		// audio resample
 		const uint8_t *indata[AV_NUM_DATA_POINTERS] = { 0 };
 		indata[0] = (const uint8_t*)data;
 
 		int len = swr_convert(asc, pcm->data, pcm->nb_samples, indata, pcm->nb_samples);
-		cout << " [" << len << "] ";
+
+
+		// audio encode
+		p = av_packet_alloc();
+		av_init_packet(p);
+
+		ret = avcodec_send_frame(ac, pcm);
+		if (ret != 0)
+		{
+			cout << "avcodec_send frame failed" << endl;
+			return p;
+		}
+
+		ret = avcodec_receive_packet(ac, p);
+		if (ret != 0 || p->size <= 0)
+		{
+			cout << "avcodec_receive_packet failed" << endl;
+			av_packet_free(&p);
+			return NULL;
+		}
+
+		cout << " . " << p->size;
+		p->stream_index = as->index;
+		p->pts = apts;
+		p->dts = p->pts;
+		apts += av_rescale_q(pcm->nb_samples, { 1, ac->sample_rate }, ac->time_base);
+
 		return p;
+	}
+
+	bool IsVideoBefore()
+	{
+		if (!ic || !vs || !as)
+			return false;
+
+		int re = av_compare_ts(vpts, vc->time_base, apts, ac->time_base);
+		if (re <= 0)
+			return true;
+		return false;
 	}
 
 private:

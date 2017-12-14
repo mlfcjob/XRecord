@@ -42,31 +42,39 @@ int main()
 	xw->WriteHeader();
 
 	for (;;) {
-		len = fread(rgb, 1, readSize, fp);
-		if (len <= 0)
-		{
-			break;
+		if (xw->IsVideoBefore()) {
+			len = fread(rgb, 1, readSize, fp);
+			if (len <= 0)
+			{
+				break;
+			}
+
+			AVPacket *pkt = xw->EncodeVideo(rgb);
+			if (!pkt)
+			{
+				cout << "EncodeVideo failed" << endl;
+				continue;
+			}
+
+			if (!xw->WriteFrame(pkt))
+			{
+				cout << "WriteFrame failed";
+				continue;
+			}
 		}
+		else {
+			len = fread(pcm, 1, aReadSize, afp);
+			if (len <= 0)
+			{
+				break;
+			}
 
-		AVPacket *pkt = xw->EncodeVideo(rgb);
-		if (!pkt)
-		{
-			cout<<"EncodeVideo failed" << endl;
-			continue;
-		}
-
-		len = fread(pcm, 1, aReadSize, afp);
-		if (len <= 0)
-		{
-			break;
-		}
-
-		xw->EncodeAudio(pcm);
-
-		if (!xw->WriteFrame(pkt))
-		{
-			cout << "WriteFrame failed";
-			continue;
+			AVPacket *apkt = xw->EncodeAudio(pcm);
+			if (!xw->WriteFrame(apkt))
+			{
+				cout << "Write audio frame failed" << endl;
+				continue;
+			}
 		}
 	}
 

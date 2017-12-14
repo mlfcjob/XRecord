@@ -48,6 +48,7 @@ public:
 
 	virtual bool AddAudioStream() = 0;
 	virtual AVPacket *EncodeAudio(const unsigned char *pcm) = 0;
+	virtual bool IsVideoBefore() = 0;
 
 	static XVideoWriter *Get(unsigned short index = 0);
 
