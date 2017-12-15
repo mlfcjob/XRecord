@@ -36,8 +36,8 @@ int main()
 		return -1;
 	}
 
-	int width  = 640;
-	int height = 480;
+	int width  = 1366;
+	int height = 768;
 	int fps = 25;
 
 	// 1 create codec
