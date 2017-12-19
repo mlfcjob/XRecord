@@ -159,7 +159,9 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	int size = 1366 * 768 * 4;
+	int w = GetSystemMetrics(SM_CXSCREEN);
+	int h = GetSystemMetrics(SM_CYSCREEN);
+	int size = w * h * 4;
 
 	char *buf = new char[size];
 	for (int i = 0; i < 100; i++)
