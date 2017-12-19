@@ -52,10 +52,10 @@ bool WriteBitmapHeader(FILE *fp, int width, int height, int channels)
 
 	info.biSize = 40;
 	info.biWidth = width;
-	info.biHeight = height;
+	info.biHeight = -height;
 	info.biPlanes = 1;
 	info.biBitCount = channels * 8;
-	info.biCompression = 0;
+	info.biCompression = BI_RGB;
 	info.biSizeImage = height * step;
 	info.biXPelsPerMeter = 0;
 	info.biYPlesPerMeter = 0;
@@ -77,25 +77,7 @@ int WriteBitmap(unsigned char index, unsigned char *rgb, int width, int height, 
 	}
 
 	WriteBitmapHeader(fp, width, height, channels);
-
-	unsigned char b, g, r, a;
-	for (int i = height - 1; i >= 0; i--)
-	{
-		for (int j = 0; j < width; j++)
-		{
-			a = *(rgb + i * width * 4 + j * 4);
-			r = *(rgb + i * width * 4 + j * 4 + 1);
-			g = *(rgb + i * width * 4 + j * 4 + 2);
-			b = *(rgb + i * width * 4 + j * 4 + 3);
-
-			fwrite(&a, 1, 1, fp);
-			fwrite(&r, 1, 1, fp);
-			fwrite(&g, 1, 1, fp);
-			fwrite(&b, 1, 1, fp);
-		}
-	}
-
-	//fwrite(rgb, 1, width * height * channels, fp);
+	fwrite(rgb, 1, width * height * channels, fp);
 
 	fclose(fp);
 }
