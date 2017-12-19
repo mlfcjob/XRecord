@@ -78,7 +78,24 @@ int WriteBitmap(unsigned char index, unsigned char *rgb, int width, int height, 
 
 	WriteBitmapHeader(fp, width, height, channels);
 
-	fwrite(rgb, 1, width * height * channels, fp);
+	unsigned char b, g, r, a;
+	for (int i = height - 1; i >= 0; i--)
+	{
+		for (int j = 0; j < width; j++)
+		{
+			a = *(rgb + i * width * 4 + j * 4);
+			r = *(rgb + i * width * 4 + j * 4 + 1);
+			g = *(rgb + i * width * 4 + j * 4 + 2);
+			b = *(rgb + i * width * 4 + j * 4 + 3);
+
+			fwrite(&a, 1, 1, fp);
+			fwrite(&r, 1, 1, fp);
+			fwrite(&g, 1, 1, fp);
+			fwrite(&b, 1, 1, fp);
+		}
+	}
+
+	//fwrite(rgb, 1, width * height * channels, fp);
 
 	fclose(fp);
 }
@@ -158,8 +175,10 @@ int main(int argc, char *argv[])
 		cout << "fopen failed" << strerror(errno) << endl;
 		return -1;
 	}
+	int w = GetSystemMetrics(SM_CXSCREEN);
+	int h = GetSystemMetrics(SM_CYSCREEN);
 
-	int size = 1366 * 768 * 4;
+	int size = w * h * 4;
 
 	char *buf = new char[size];
 	for (int i = 0; i < 100; i++)
