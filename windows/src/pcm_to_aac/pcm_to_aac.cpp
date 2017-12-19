@@ -15,7 +15,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	char inFile[] = "test.wav";
+	char inFile[] = "out.pcm";
 	char outFile[] = "out.aac";
 
 	// muxer demuxers
