@@ -52,10 +52,10 @@ bool WriteBitmapHeader(FILE *fp, int width, int height, int channels)
 
 	info.biSize = 40;
 	info.biWidth = width;
-	info.biHeight = height;
+	info.biHeight = -height;
 	info.biPlanes = 1;
 	info.biBitCount = channels * 8;
-	info.biCompression = 0;
+	info.biCompression = BI_RGB;
 	info.biSizeImage = height * step;
 	info.biXPelsPerMeter = 0;
 	info.biYPlesPerMeter = 0;
