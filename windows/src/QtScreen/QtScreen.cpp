@@ -4,6 +4,8 @@
 #include <QImage>
 #include <QPainter>
 #include <QTime>
+#include <QApplication>
+#include <QGuiApplication>
 
 #include <d3d9.h>
 
@@ -11,6 +13,7 @@
 using namespace std;
 
 #pragma comment(lib, "d3d9.lib")
+
 
 QtScreen::QtScreen(QWidget *parent)
 	: QWidget(parent)
@@ -84,6 +87,7 @@ void CaptureScreen(void *data, int index)
 
 void QtScreen::paintEvent(QPaintEvent *e)
 {
+	static int i = 0;
 	// obtain QScreen
 	static QScreen *scr = NULL;
 	if (!scr) {
@@ -98,7 +102,7 @@ void QtScreen::paintEvent(QPaintEvent *e)
 	int h = GetSystemMetrics(SM_CYSCREEN);
 	if (!image) {
 		uchar *buf = new uchar[w * h * 4];
-		image = new QImage(buf, w, h, QImage::Format_ARGB32);
+		image = new QImage(buf, w, h, QImage::Format_RGB32);
 		tm.start();
 	}
 
@@ -109,6 +113,7 @@ void QtScreen::paintEvent(QPaintEvent *e)
 
 	CaptureScreen(image->bits(), 0);
 	cout <<" | " << tm.restart() << " | ";
+	
 	// paint capture screen
 	QPainter p;
 	p.begin(this);

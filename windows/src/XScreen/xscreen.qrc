@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="XScreen">
+    <file>Resources/record.ico</file>
+  </qresource>
+</RCC>
