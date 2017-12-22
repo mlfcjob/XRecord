@@ -1,5 +1,15 @@
 <RCC>
   <qresource prefix="XScreen">
+    <file>Resources/Record_Hot_96.ico</file>
+    <file>Resources/Record_Normal_96.ico</file>
+    <file>Resources/record_pess_96.ico</file>
+    <file>Resources/Record_Hot_32.ico</file>
+    <file>Resources/Record_32.ico</file>
+    <file>Resources/Record_Plat.ico</file>
+    <file>Resources/close_16.ico</file>
+    <file>Resources/close_32.ico</file>
+    <file>Resources/min_16.ico</file>
+    <file>Resources/min_32.ico</file>
     <file>Resources/record.ico</file>
   </qresource>
 </RCC>
