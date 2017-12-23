@@ -9,6 +9,9 @@ class XScreen : public QWidget
 
 public:
 	XScreen(QWidget *parent = Q_NULLPTR);
+	void timerEvent(QTimerEvent *e);
+public slots:
+    void Record();
 
 private:
 	Ui::XScreenClass ui;

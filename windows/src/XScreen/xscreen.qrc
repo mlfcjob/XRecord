@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="XScreen">
+    <file>Resources/stop_96.ico</file>
     <file>Resources/Record_Hot_96.ico</file>
     <file>Resources/Record_Normal_96.ico</file>
     <file>Resources/record_pess_96.ico</file>

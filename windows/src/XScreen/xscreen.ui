@@ -270,5 +270,24 @@ background-image: url(:/XScreen/Resources/record_pess_96.ico);
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>recorButton</sender>
+   <signal>clicked()</signal>
+   <receiver>XScreenClass</receiver>
+   <slot>Record()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>703</x>
+     <y>99</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>706</x>
+     <y>286</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>Record()</slot>
+ </slots>
 </ui>
