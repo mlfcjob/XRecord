@@ -82,6 +82,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="XCaptureThread.cpp" />
     <ClCompile Include="xscreen.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -111,6 +112,7 @@
   <ItemGroup>
     <ClInclude Include="GeneratedFiles\ui_xscreen.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="XCaptureThread.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="xscreen.qrc">

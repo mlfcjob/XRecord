@@ -55,6 +55,9 @@
     <ClCompile Include="GeneratedFiles\qrc_xscreen.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="XCaptureThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="xscreen.h">
@@ -72,6 +75,9 @@
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XCaptureThread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
