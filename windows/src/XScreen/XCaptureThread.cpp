@@ -3,6 +3,7 @@
 #include <iostream>
 #include <QDesktopWidget.h>
 #include <QApplication.h>
+#include <QTime>
 
 using namespace std;
 
@@ -99,19 +100,55 @@ void XCaptureThread::Start()
 
 void XCaptureThread::run()
 {
+	QTime t;
+
 	while (!isExit)
 	{
+		t.restart();
 		mutex.lock();
-		cout << " . ";
-		msleep(200);
+		int s = 1000 / fps;
+
+		if (rgbs.size() < cacheSize) {
+			char *data = new char[width * height * 4];
+			CaptureScreen(data, 0);
+			rgbs.push_back(data);
+			cout << " + ";
+		}
 		mutex.unlock();
+
+		s = s - t.restart();
+		if (s <= 0 || s > 1000) {
+			s = 10;
+		}
+		cout << " [" << s << "] ";
+		msleep(s);
 	}
+
+
+}
+
+char *XCaptureThread::GetRGB()
+{
+	mutex.lock();
+	if (rgbs.empty()) {
+		mutex.unlock();
+		return NULL;
+	}
+
+	char *data = rgbs.front();
+	rgbs.pop_front();
+	mutex.unlock();
+	return data;
 }
 
 void XCaptureThread::Stop()
 {
 	mutex.lock();
 	isExit = true;
+	while (!rgbs.empty()) {
+		delete rgbs.front();
+		rgbs.pop_front();
+	}
 	mutex.unlock();
 	wait();
 }

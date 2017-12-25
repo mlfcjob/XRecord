@@ -11,12 +11,14 @@ public:
 	int height = 720;
 
 	// in parameter
-	int fps = 10;
+	int fps = 15;
 	int cacheSize = 3;
 
+	// thread safe
 	void Start();
 	void run();
 	void Stop();
+	char *GetRGB();
 	static XCaptureThread *Get()
 	{
 		static XCaptureThread ct;
