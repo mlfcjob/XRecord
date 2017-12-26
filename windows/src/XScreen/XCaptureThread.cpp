@@ -120,7 +120,6 @@ void XCaptureThread::run()
 		if (s <= 0 || s > 1000) {
 			s = 10;
 		}
-		cout << " [" << s << "] ";
 		msleep(s);
 	}
 

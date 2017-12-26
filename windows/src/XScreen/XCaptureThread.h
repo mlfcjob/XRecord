@@ -14,7 +14,7 @@ public:
 	int fps = 15;
 	int cacheSize = 3;
 
-	// thread safe
+	// thread safe, return space need to be freed by user
 	void Start();
 	void run();
 	void Stop();

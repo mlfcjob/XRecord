@@ -58,6 +58,15 @@
     <ClCompile Include="XCaptureThread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="XAudioThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="XScreenRecord.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="XVideoWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="xscreen.h">
@@ -78,6 +87,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="XCaptureThread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XAudioThread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XScreenRecord.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XVideoWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <QTime>
+#include "XScreenRecord.h"
 
 using namespace std;
 
@@ -21,18 +22,25 @@ XScreen::XScreen(QWidget *parent)
 	setWindowFlags(Qt::FramelessWindowHint);
 	setAttribute(Qt::WA_TranslucentBackground);
 
-	startTimer(100);
+	timerId = startTimer(100);
 }
 
 void XScreen::Record()
 {
+	QDateTime t = QDateTime::currentDateTime();
+	QString filename = t.toString("yyyyMMdd_hhmmss");
+	filename = "xscreen_" + filename;
+	filename += ".mp4";
+
 	isRecord = !isRecord;
 	if (isRecord) {
 		rtime.restart();
 		ui.recorButton->setStyleSheet("background-color:rgba(255, 255, 255, 0);background-image:url(:/XScreen/Resources/stop_96.ico)");
+		XScreenRecord::Get()->Start(filename.toLocal8Bit());
 	}
 	else {
 		ui.recorButton->setStyleSheet(RECORD_QSS);
+		XScreenRecord::Get()->Stop();
 	}
 }
 

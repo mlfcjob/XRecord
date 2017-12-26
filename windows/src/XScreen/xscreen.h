@@ -8,6 +8,7 @@ class XScreen : public QWidget
 	Q_OBJECT
 
 public:
+	int timerId = -1;
 	XScreen(QWidget *parent = Q_NULLPTR);
 	void timerEvent(QTimerEvent *e);
 public slots:

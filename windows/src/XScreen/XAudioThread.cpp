@@ -110,6 +110,5 @@ char *XAudioThread::GetPcm()
 	char *re = pcms.front();
 	pcms.pop_front();
 	mutex.unlock();
-	cout << "A";
 	return re;
 }

@@ -18,6 +18,7 @@ public:
 	}
 	virtual ~XAudioThread();
 
+	// thread safe, the space need to be freed by user
 	char *GetPcm();
 	void Start();
 	void Stop();
