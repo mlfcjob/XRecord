@@ -62,13 +62,15 @@ void XScreenRecord::run()
 		mutex.lock();
 
 		// write video
-		char *rgb = XCaptureThread::Get()->GetRGB();
-		if (rgb)
-		{
-			AVPacket *p = XVideoWriter::Get(0)->EncodeVideo((unsigned char*)rgb);
-			delete rgb;
-			XVideoWriter::Get(0)->WriteFrame(p);
-			cout << " @ ";
+		if (XVideoWriter::Get(0)->IsVideoBefore()) {
+			char *rgb = XCaptureThread::Get()->GetRGB();
+			if (rgb)
+			{
+				AVPacket *p = XVideoWriter::Get(0)->EncodeVideo((unsigned char*)rgb);
+				delete rgb;
+				XVideoWriter::Get(0)->WriteFrame(p);
+				cout << " @ ";
+			}
 		}
 
 		// write audio
