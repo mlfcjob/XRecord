@@ -30,6 +30,7 @@ bool XScreenRecord::Start(const char* filename)
 
 	//init video record
 	XCaptureThread::Get()->Start();
+	XCaptureThread::Get()->fps = fps;
 
 	//init audio record
 	XAudioThread::Get()->Start();
@@ -60,27 +61,24 @@ void XScreenRecord::run()
 	{
 		mutex.lock();
 
-		if (XVideoWriter::Get(0)->IsVideoBefore()) {
-			// write video
-			char *rgb = XCaptureThread::Get()->GetRGB();
-			if (rgb)
-			{
-				AVPacket *p = XVideoWriter::Get(0)->EncodeVideo((unsigned char*)rgb);
-				delete rgb;
-				XVideoWriter::Get(0)->WriteFrame(p);
-				cout << " @ ";
-			}
+		// write video
+		char *rgb = XCaptureThread::Get()->GetRGB();
+		if (rgb)
+		{
+			AVPacket *p = XVideoWriter::Get(0)->EncodeVideo((unsigned char*)rgb);
+			delete rgb;
+			XVideoWriter::Get(0)->WriteFrame(p);
+			cout << " @ ";
 		}
-		else {
-			// write audio
-			char *pcm = XAudioThread::Get()->GetPcm();
-			if (pcm)
-			{
-				AVPacket *p = XVideoWriter::Get(0)->EncodeAudio((unsigned char*)pcm);
-				delete pcm;
-				XVideoWriter::Get(0)->WriteFrame(p);
-				cout << " # ";
-			}
+
+		// write audio
+		char *pcm = XAudioThread::Get()->GetPcm();
+		if (pcm)
+		{
+			AVPacket *p = XVideoWriter::Get(0)->EncodeAudio((unsigned char*)pcm);
+			delete pcm;
+			XVideoWriter::Get(0)->WriteFrame(p);
+			cout << " # ";
 		}
 		
 		msleep(10);

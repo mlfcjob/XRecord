@@ -28,8 +28,6 @@ XScreen::XScreen(QWidget *parent)
 void XScreen::Record()
 {
 
-	
-
 	isRecord = !isRecord;
 	if (isRecord) {
 		rtime.restart();
@@ -50,13 +48,11 @@ void XScreen::Record()
 		{
 			return;
 		}
-		else {
-			cout << "start record failed! " << endl;
-			isRecord = false;
-			ui.recorButton->setStyleSheet(RECORD_QSS);
-		}
+
+		isRecord = false;
 	}
-	else {
+
+	{
 		ui.recorButton->setStyleSheet(RECORD_QSS);
 		XScreenRecord::Get()->Stop();
 	}
