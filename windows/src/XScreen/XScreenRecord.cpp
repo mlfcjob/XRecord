@@ -19,6 +19,7 @@ XScreenRecord::~XScreenRecord()
 
 bool XScreenRecord::Start(const char* filename)
 {
+	cout << filename << endl;
 	Stop();
 	if (!filename) {
 		return false;

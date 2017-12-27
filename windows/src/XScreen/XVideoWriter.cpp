@@ -167,6 +167,10 @@ public:
 
 	AVPacket * EncodeVideo(const unsigned char *data)
 	{
+		if (!ic || !vsc || !yuv) {
+			return NULL;
+		}
+
 		AVPacket *p = NULL;
 		uint8_t *indata[AV_NUM_DATA_POINTERS] = { 0 };
 		indata[0] = (uint8_t *)data;
@@ -213,6 +217,14 @@ public:
 
 		// open io
 		ret = avio_open(&ic->pb, filename.c_str(), AVIO_FLAG_WRITE);
+		if (ret < 0) {
+			char buf[1024] = { 0 };
+			av_strerror(ret, buf, sizeof(buf));
+			cout << filename.c_str() << endl;
+			cout << "avio open failed :" << buf << endl;
+			return false;
+
+		}
 
 		//write header
 		ret = avformat_write_header(ic, NULL);

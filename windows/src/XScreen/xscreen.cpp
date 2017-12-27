@@ -27,16 +27,34 @@ XScreen::XScreen(QWidget *parent)
 
 void XScreen::Record()
 {
-	QDateTime t = QDateTime::currentDateTime();
-	QString filename = t.toString("yyyyMMdd_hhmmss");
-	filename = "xscreen_" + filename;
-	filename += ".mp4";
+
+	
 
 	isRecord = !isRecord;
 	if (isRecord) {
 		rtime.restart();
 		ui.recorButton->setStyleSheet("background-color:rgba(255, 255, 255, 0);background-image:url(:/XScreen/Resources/stop_96.ico)");
-		XScreenRecord::Get()->Start(filename.toLocal8Bit());
+
+		QDateTime t = QDateTime::currentDateTime();
+		QString filename = t.toString("yyyyMMdd_hhmmss");
+		filename = "xscreen_" + filename;
+		filename += ".mp4";
+		filename = ui.urlEdit->text() + "\\" + filename;
+
+		XScreenRecord::Get()->outWidth = ui.widthEdit->text().toInt();
+		XScreenRecord::Get()->outHeight = ui.heightEdit->text().toInt();
+		XScreenRecord::Get()->fps = ui.fpsEdit->text().toInt();
+
+
+		if (XScreenRecord::Get()->Start(filename.toLocal8Bit()))
+		{
+			return;
+		}
+		else {
+			cout << "start record failed! " << endl;
+			isRecord = false;
+			ui.recorButton->setStyleSheet(RECORD_QSS);
+		}
 	}
 	else {
 		ui.recorButton->setStyleSheet(RECORD_QSS);
@@ -47,8 +65,10 @@ void XScreen::Record()
 
 void XScreen::timerEvent(QTimerEvent *e)
 {
-	int es = rtime.elapsed() / 1000;  // second
-	char buf[1024] = {0};
-	sprintf(buf, "%03d:%02d", es / 60, es % 60);
-	ui.timelabel->setText(buf);
+	if (isRecord) {
+		int es = rtime.elapsed() / 1000;  // second
+		char buf[1024] = { 0 };
+		sprintf(buf, "%03d:%02d", es / 60, es % 60);
+		ui.timelabel->setText(buf);
+	}
 }
